@@ -5522,9 +5522,20 @@ var rainfall = (function () {
                 new_json['properties']['rain_intensity'] = latest_rainval;
                 if (latest_rainval > 15) {
                     x.play();
-                    y.className = "show";
-                    y.innerHTML = "Please monitor the rainfall condition in "+new_json['properties']['proper_name'];
-                    setTimeout(function(){ y.className = y.className.replace("show", ""); }, 3000);
+                    var options =  {
+                        content: "Please monitor the rainfall condition in "+new_json['properties']['proper_name'] ,
+                        style: "snackbar",
+                        timeout: 10000,
+                        htmlAllowed: true,
+                        onClose: function(){
+                            //var station_name = new_json['properties']['proper_name'];
+                            //var mun =  new_json['properties']['municipality'];
+                            //var prov =  new_json['properties']['province'];
+                            //var data = new_json['properties']['data'];
+                            //get_station(station_name, mun, prov, data)
+                        }
+                    }
+                    $.snackbar(options);
                 }
 
             } else {
