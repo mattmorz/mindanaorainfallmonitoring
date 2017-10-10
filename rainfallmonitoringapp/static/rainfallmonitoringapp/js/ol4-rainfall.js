@@ -5527,13 +5527,7 @@ var rainfall = (function () {
                         style: "snackbar",
                         timeout: 10000,
                         htmlAllowed: true,
-                        onClose: function(){
-                            //var station_name = new_json['properties']['proper_name'];
-                            //var mun =  new_json['properties']['municipality'];
-                            //var prov =  new_json['properties']['province'];
-                            //var data = new_json['properties']['data'];
-                            //get_station(station_name, mun, prov, data)
-                        }
+                        onClose: function(){}
                     }
                     $.snackbar(options);
                 }
