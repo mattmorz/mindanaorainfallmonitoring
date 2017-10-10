@@ -1,0 +1,253 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mindanao Online Rainfall Monitoring</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="description" content="Mindanao Online Rainfall Monitoring">
+    <meta name="author" content="CSU Phil-LiDAR 1">
+    <meta name="theme-color" content="#e7e7e7">
+    <!--<link rel="manifest" href="{% static "rainfallmonitoringapp/js/manifest.json" %}">-->
+    <link rel="stylesheet" type="text/css"
+          href="{% static "rainfallmonitoringapp/css/bootstrap.min.css" %}"/>
+    <link rel="stylesheet" href="{% static "rainfallmonitoringapp/css/ol.css" %}" type="text/css">
+    <style>
+        * {
+            border-radius: 0 !important
+        }
+
+        #accum, #max_rainfall {
+            display: none
+        }
+
+        body, html {
+            padding: 0;
+            margin: 0
+        }
+
+        body {
+            overflow: hidden
+        }
+
+        #map {
+            z-index: 35;
+            width: 100%;
+            height: 100%;
+            top: 50px;
+            position: absolute;
+        }
+
+        #footer {
+            position: fixed;
+            bottom: 0;
+            z-index: 99
+        }
+
+        #wrapper {
+            padding: 5px
+        }
+
+        @media only screen and (max-width: 500px) {
+            a.navbar-brand {
+                font-size: 12px
+            }
+
+            #footer {
+                position: fixed;
+                bottom: 0;
+                z-index: 99
+            }
+        }
+
+        p#time-left {
+            margin: 15px 10px;
+        }
+
+        div.pLoading {
+            top: 200px;
+            right: 1em;
+            position: absolute;
+            background-color: rgba(0, 60, 136, .5);
+            padding: 5px;
+            color: #fff;
+            border: 2px rgba(255, 255, 255, .7) solid;
+        }
+
+        #info {
+            position: absolute;
+            height: 1px;
+            width: 1px;
+            z-index: 100;
+        }
+
+        .tooltip.in {
+            opacity: 1;
+        }
+
+        .tooltip.top .tooltip-arrow {
+            border-top-color: white;
+        }
+
+        .tooltip-inner {
+            border: 2px solid white;
+            background-color: rgba(0, 60, 136, .8);
+        }
+
+        #snackbar {
+            visibility: hidden;
+            min-width: 250px;
+            height: 50px;
+            margin-left: -125px;
+            background-color: rgba(0, 60, 136, .6);
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            border: 2px solid white;
+            position: fixed;
+            left: 50%;
+            top: 70px;
+            font-size: 17px;
+            z-index: 999999;
+        }
+
+        #snackbar.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @-webkit-keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @-webkit-keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <nav class="navbar navbar-fixed-top navbar-default" role="navigation">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Mindanao Online Rainfall Monitoring</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse pull-right" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <form class="form-inline" style="padding:10px 10px 0 10px" id="frmSearch">
+                            <div class="form-group">
+                                <label class="sr-only" for="rain_gauge">Rain Gauge</label>
+                                <input type="text" class="form-control" data-provide="typeahead" autocomplete="off"
+                                       id="rain_gauge" placeholder="type rainfall station name">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Go</button>
+                            <button type="reset" class="btn btn-default" id="reset">Reset</button>
+                        </form>
+
+                    </li>
+                    <li><p id="time-left">Rainfall Data is updated every 15 mins.</p></li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+</div>
+<audio id="myAudio">
+    <source src="{% static "rainfallmonitoringapp/media/horn.wav" %}" type="audio/wav">
+    <source src="{% static "rainfallmonitoring/media/horn.mp3" %}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<div id="map">
+    <div id="info"></div>
+</div>
+<div id="snackbar"></div>
+<div id="footer" class="container-fluid">
+    <div class="row" style="margin-left:5px">&copy; 2015-2017 CSU: Phil-LiDAR 1 Project, Caraga State University,
+        Ampayon, Butuan City. All Rights Reserved.
+    </div>
+</div>
+
+
+<!--modal-->
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+     id="modal-content" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding:10px"><span
+                    aria-hidden="true">&times;</span>
+            </button>
+            <div id="wrapper">
+
+                <div id="container" width='100%'></div>
+                <div class="row" id="other-info">
+                    <div class="col-md-6" id="max_rainfall"></div>
+                    <div class="col-md-6" id="accum"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type="text/javascript"
+        src="{% static "rainfallmonitoringapp/js/bootstrap.min.js" %}"></script>
+<script type="text/javascript" src="{% static "rainfallmonitoringapp/js/bootstrap3-typeahead.min.js" %}"></script>
+<script type="text/javascript" src="{% static "rainfallmonitoringapp/js/highcharts.js" %}"></script>
+
+<script src="{% static "rainfallmonitoringapp/js/ol.js" %}"></script>
+<script type="text/javascript" src="{% static "rainfallmonitoringapp/js/ol4-rainfall.js" %}"></script>
+</body>
+
+</html>

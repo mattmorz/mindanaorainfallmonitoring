@@ -1,0 +1,21 @@
+{
+	"name": "Mindanao Online Rainfall Monitoring",
+	"short_name": "MindanaoRainfall",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"theme_color": "#e7e7e7",
+	"background_color": "#EEE",
+	"icons":[
+		{
+		"src": "https://raw.githubusercontent.com/caragarainfall/caragarainfall.github.io/master/PhilLidar_Logo_new-150x150.png",
+		"sizes": "150x150",
+		"type": "image/png"
+		},
+		{  
+	      "src": "https://raw.githubusercontent.com/caragarainfall/caragarainfall.github.io/master/icon-512x512.png",  
+	      "sizes": "512x512",  
+	      "type": "image/png"  
+	    }
+	]
+}
