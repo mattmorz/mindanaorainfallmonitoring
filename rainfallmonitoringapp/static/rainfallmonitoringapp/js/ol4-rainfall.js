@@ -5105,9 +5105,6 @@ var rainfall = (function () {
     var max_rainfall = $('#max_rainfall');
     var accum = $('#accum');
     var x = document.getElementById("myAudio");
-    var y = document.getElementById("snackbar")
-
-
 
     function colorize() {
         var arr_id = [138, 959, 1285, 1858, 739, 596, 566, 1118, 2110, 1110, 1453, 1109, 760, 1322, 570, 782, 1198, 1065, 795, 1672, 797, 1214, 158, 781, 1229, 1592, 957, 1119, 128, 2047, 205, 1371, 1563, 280, 564, 592, 725, 496, 1744, 1743, 1567, 728, 2096, 958, 1461, 156, 1638, 1699, 985, 1698, 1450, 1877, 1656, 2163, 1323, 1645, 130, 2170, 1683, 1639, 2024, 2221, 2027, 2028, 1565, 1458, 1674, 1878, 1880, 954, 851, 955, 1640, 1456, 1671, 1680, 2032, 983, 1653, 1564, 1654, 643, 1242, 1627, 118, 711, 1240, 1625, 1196, 2060, 1843, 729, 779, 110, 1577, 135, 1561, 1566, 730, 311, 1459, 126, 154, 1962, 1664, 1423, 960, 1634, 743, 124, 1087, 498, 2222, 2175, 1735, 1837, 587, 1597, 769, 1562, 1162, 607, 1191, 608, 707, 1241, 1600, 609, 1576, 1204, 1589, 1649, 2055, 731, 1076, 1643, 1742, 768, 857, 488, 1169, 1840, 576, 713, 1607, 1199, 1152, 111, 1913, 133, 965, 1121, 1961, 279, 2030, 155, 134, 2064, 613, 597, 1289, 1598, 1657, 1608, 1741, 961, 1606, 1626, 1120, 723, 1624, 591, 1386, 1063, 1610, 1588, 1666, 1107, 2048, 588, 1460, 1168, 709, 1587, 1106, 1590, 1203, 1675, 1287, 1216, 561, 1082, 1284, 568, 732, 1449, 842, 500, 1166, 982, 1111, 611, 1573, 1650, 1841, 1454, 549, 956, 1116, 1064, 1195, 1114, 2035, 159, 1062, 2065, 1641, 1239, 788, 590, 726, 724, 125, 497, 1596, 2001, 1197, 733, 2029, 123, 505, 129, 784, 612, 727, 1099, 2347, 157, 686, 1476, 501, 1117, 281, 1112, 2097, 712, 1115, 1678, 1642, 787, 602, 1599, 1108, 1601, 142, 1475, 1455, 131, 738, 1912, 1077, 499, 1568, 1066, 314, 565, 1165, 710, 152, 1259, 1682, 2220, 575, 487, 2223, 1740, 589, 1677, 1326, 1836, 1554, 1424, 1078, 1189, 563, 1074, 1679, 2045, 153, 1914, 2058, 1651, 1915, 2212, 745, 571, 569, 1288, 2057, 1594, 285, 1193, 1575, 1125, 2062, 706, 1094, 1734, 1593, 1244, 1609, 1233, 489, 1574, 606, 1457, 1167, 852, 2109, 1595, 1194, 1591, 2111, 780, 1088, 1170, 708, 1083, 1192, 1113, 1171, 754, 562, 1286, 1888, 635, 567, 778, 1177];
@@ -5492,7 +5489,6 @@ var rainfall = (function () {
         var getData = $.ajax({url: "/device/", type: "GET", dataType: "json", data: {dev_id: dev_id}});
         getData.done(function (data) {
             var data_len = data['data'].length;
-            var rainfall_data = data['data'];
             var dev_id = data['dev_id'];
             var loc = data['location'];
             var rainVal = data['data'];
@@ -5513,24 +5509,35 @@ var rainfall = (function () {
                     "rain_intensity": 0,
                     "province": prov,
                     "municipality": mun,
-                    "data": rainfall_data
+                    "data": rainVal
                 }
             };
 
             if (data_len > 0) {
                 latest_rainval = parseFloat(rainVal[data_len - 1]['rain_value'] * 4);
                 new_json['properties']['rain_intensity'] = latest_rainval;
-                if (latest_rainval > 15) {
+                var accum = 0;
+                var rain_avg, rain = 0;
+                for(var i = 0; i < data_len;i++){
+                    parseFloat(accum += rainVal[i]['rain_value']);
+                    if(rainVal[i]['rain_value']>0){
+                        rain+=1
+                    }
+                }
+                rain_avg = parseFloat((rain/data_len)* 100);
+                var rain_avg_f = rain_avg.toFixed(2)
+                if ((accum > 50) && (rain_avg_f > 65)) {
                     x.play();
                     var options =  {
                         content: "Please monitor the rainfall condition in "+new_json['properties']['proper_name'] ,
                         style: "snackbar",
-                        timeout: 10000,
+                        timeout: 0,
                         htmlAllowed: true,
                         onClose: function(){}
                     }
                     $.snackbar(options);
                 }
+                console.log(new_json['properties']['proper_name']+': '+rain_avg_f)
 
             } else {
                 new_json['properties']['data'] = [];
@@ -5544,7 +5551,7 @@ var rainfall = (function () {
             }
             var features = new ol.format.GeoJSON().readFeatures(new_json);
             vectorLayer.getSource().addFeatures(features);
-            console.log(new_json['properties']['proper_name'])
+
         }).fail(function () {
                 var coords, proper_name, province, municipality;
                 var feats = vectorSource.getFeatures();
@@ -5557,7 +5564,7 @@ var rainfall = (function () {
                         municipality = feats[i].R['City_Municipality'];
                     }
                 }
-                var new_json = {
+                var new_json1 = {
                     "type": "Feature",
                     "geometry": {
                         "type": "Point",
@@ -5572,8 +5579,8 @@ var rainfall = (function () {
                         "data": []
                     }
                 };
-                var features = new ol.format.GeoJSON().readFeatures(new_json);
-                vectorLayer.getSource().addFeatures(features);
+                var features1 = new ol.format.GeoJSON().readFeatures(new_json1);
+                vectorLayer.getSource().addFeatures(features1);
                 console.error('Error!')
             });
     }
@@ -5844,6 +5851,11 @@ var rainfall = (function () {
         }
     }
 
+    var info = $('#info');
+    info.tooltip({
+        animation: false,
+        trigger: 'manual'
+    });
     var displayFeatureInfo = function (pixel) {
         info.css({
             left: pixel[0] + 'px',
@@ -5865,11 +5877,7 @@ var rainfall = (function () {
             info.tooltip('hide');
         }
     };
-    var info = $('#info');
-    info.tooltip({
-        animation: false,
-        trigger: 'manual'
-    });
+
     function initMap() {
         map = new ol.Map({
             layers: [
